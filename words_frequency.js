@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         词频统计
 // @namespace    https://quoth.win/word_freq
-// @version      1.2
+// @version      1.3
 // @description  利用COCA一万五词频表分析网页文单词词频，建议手动替换为五万词库。
 // @author       Reynard
 // @include      *://*
-// @grant        none
+// @grant        GM_notification
 // @run-at       document-idle
 // 
+// @downloadURL https://update.greasyfork.org/scripts/371031/%E8%AF%8D%E9%A2%91%E7%BB%9F%E8%AE%A1.user.js
+// @updateURL https://update.greasyfork.org/scripts/371031/%E8%AF%8D%E9%A2%91%E7%BB%9F%E8%AE%A1.meta.js
 // ==/UserScript==
 
 //添加样式表
@@ -309,45 +311,69 @@ var checkElements = function (selected) { //需要完善
         return false;
     }
 }
+
+var clickFunction = function () {
+	var selected = document.getSelection();
+	var selectedS = selected.toString();
+
+	if (checkElements(selected)) {
+			console.log("Skip!!!");
+	} else if (selectedS != null && selectedS != "" && selectedS.trim().indexOf(" ") < 0) {
+			console.log(inWords("the"));
+			if (inWords(selectedS) >= 0) {
+					addSpan(selected, selectedS, checkFrequency(selectedS));
+			} else if (inWords(selectedS) == -1) {
+					console.log("不存在此单词" + selectedS);
+					if (selectedS != "," && selectedS != "." && selectedS != "!" && selectedS != '"' && selectedS != "\'" && selectedS != "-" && selectedS != " " && selectedS != "'" && selectedS != ":" && selectedS != "?") {
+							addSpan(selected, selectedS, 0);
+					}
+			} else {
+					console.log("Exception!");
+			}
+			document.getSelection().removeAllRanges();
+	} else if (selectedS != null && selectedS != "" && selectedS.indexOf(" ") >= 1) {
+			console.log("Paragraph!");
+			if (selectedS.length >= 2000) {
+					var r = confirm("您选择了大量文本，可能会影响系统响应时间，是否继续？");
+					if (r) {
+							addSpan(selected, selectedS, 0, true); //0是占位符
+					} else {
+							console.log("Canceled!!!");
+					}
+			} else {
+					addSpan(selected, selectedS, 0, true); //0是占位符
+			}
+			document.getSelection().removeAllRanges();
+	}
+	 //运行完成后取消选择
+
+	
+}
+
+var flag = false;
 //主进程
 var main = function () {
-    document.getElementsByTagName('body')[0].addEventListener("click", function () {
-        var selected = document.getSelection();
-        var selectedS = selected.toString();
-
-        if (checkElements(selected)) {
-            console.log("Skip!!!");
-        } else if (selectedS != null && selectedS != "" && selectedS.trim().indexOf(" ") < 0) {
-            console.log(inWords("the"));
-            if (inWords(selectedS) >= 0) {
-                addSpan(selected, selectedS, checkFrequency(selectedS));
-            } else if (inWords(selectedS) == -1) {
-                console.log("不存在此单词" + selectedS);
-                if (selectedS != "," && selectedS != "." && selectedS != "!" && selectedS != '"' && selectedS != "\'" && selectedS != "-" && selectedS != " " && selectedS != "'" && selectedS != ":" && selectedS != "?") {
-                    addSpan(selected, selectedS, 0);
-                }
-            } else {
-                console.log("Exception!");
-            }
-            document.getSelection().removeAllRanges();
-        } else if (selectedS != null && selectedS != "" && selectedS.indexOf(" ") >= 1) {
-            console.log("Paragraph!");
-            if (selectedS.length >= 2000) {
-                var r = confirm("您选择了大量文本，可能会影响系统响应时间，是否继续？");
-                if (r) {
-                    addSpan(selected, selectedS, 0, true); //0是占位符
-                } else {
-                    console.log("Canceled!!!");
-                }
-            } else {
-                addSpan(selected, selectedS, 0, true); //0是占位符
-            }
-            document.getSelection().removeAllRanges();
-        }
-         //运行完成后取消选择
-
-        
-    });
+	document.getElementsByTagName('body')[0].addEventListener("click", clickFunction);
+	flag = true;
+	document.addEventListener('keydown', (e) => {
+		if (e.altKey && e.keyCode === 77) { // alt和M
+			if (flag === true) {
+				flag = !flag;
+				document.getElementsByTagName('body')[0].removeEventListener("click", clickFunction);
+				GM_notification({
+					text: '切换为关闭',
+					timeout: 3000 // 通知显示时间，单位为毫秒
+				});
+			}else {
+				flag = !flag;
+				document.getElementsByTagName('body')[0].addEventListener("click", clickFunction);
+				GM_notification({
+					text: '切换为开启',
+					timeout: 3000 // 通知显示时间，单位为毫秒
+				});
+			}
+		}
+	})
 };
 //运行主程序
 main();
