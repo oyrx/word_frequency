@@ -357,16 +357,20 @@ var main = function () {
 	flag = true;
 	document.addEventListener('keydown', (e) => {
 		if (e.altKey && e.keyCode === 77) { // alt和M
-			GM_notification({
-				text: '切换开启关闭',
-				timeout: 3000 // 通知显示时间，单位为毫秒
-			});
 			if (flag === true) {
 				flag = !flag;
 				document.getElementsByTagName('body')[0].removeEventListener("click", clickFunction);
+				GM_notification({
+					text: '切换为关闭',
+					timeout: 3000 // 通知显示时间，单位为毫秒
+				});
 			}else {
 				flag = !flag;
 				document.getElementsByTagName('body')[0].addEventListener("click", clickFunction);
+				GM_notification({
+					text: '切换为开启',
+					timeout: 3000 // 通知显示时间，单位为毫秒
+				});
 			}
 		}
 	})
